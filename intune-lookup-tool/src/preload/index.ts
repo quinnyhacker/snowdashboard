@@ -10,17 +10,20 @@ const api: PreloadApi = {
   device: {
     browse: () => ipcRenderer.invoke(IPC.deviceBrowse),
     confirmColumns: (columns) => ipcRenderer.invoke(IPC.deviceConfirmColumns, columns),
-    changeColumns: () => ipcRenderer.invoke(IPC.deviceChangeColumns)
+    changeColumns: () => ipcRenderer.invoke(IPC.deviceChangeColumns),
+    refresh: () => ipcRenderer.invoke(IPC.deviceRefresh)
   },
   legalHold: {
     browse: () => ipcRenderer.invoke(IPC.legalHoldBrowse),
     confirmColumns: (columns) => ipcRenderer.invoke(IPC.legalHoldConfirmColumns, columns),
-    changeColumns: () => ipcRenderer.invoke(IPC.legalHoldChangeColumns)
+    changeColumns: () => ipcRenderer.invoke(IPC.legalHoldChangeColumns),
+    refresh: () => ipcRenderer.invoke(IPC.legalHoldRefresh)
   },
   district: {
     browse: () => ipcRenderer.invoke(IPC.districtBrowse),
     confirmColumns: (columns) => ipcRenderer.invoke(IPC.districtConfirmColumns, columns),
-    changeColumns: () => ipcRenderer.invoke(IPC.districtChangeColumns)
+    changeColumns: () => ipcRenderer.invoke(IPC.districtChangeColumns),
+    refresh: () => ipcRenderer.invoke(IPC.districtRefresh)
   },
   search: {
     run: (params) => ipcRenderer.invoke(IPC.searchRun, params)

@@ -13,6 +13,12 @@ export async function changeColumnsForSection(kind: SectionKind): Promise<Sectio
   return window.api.district.changeColumns()
 }
 
+export async function refreshSection(kind: SectionKind): Promise<SectionSummary> {
+  if (kind === 'device') return window.api.device.refresh()
+  if (kind === 'legalHold') return window.api.legalHold.refresh()
+  return window.api.district.refresh()
+}
+
 export async function confirmColumnsForSection(
   kind: SectionKind,
   selections: Record<string, string>

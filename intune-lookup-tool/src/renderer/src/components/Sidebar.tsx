@@ -1,8 +1,9 @@
+import { useState } from 'react'
 import { useAppStore, type SectionKind } from '@renderer/state/store'
-import { browseSection, changeColumnsForSection } from '@renderer/lib/sectionActions'
+import { browseSection, changeColumnsForSection, refreshSection } from '@renderer/lib/sectionActions'
 import { SECTION_TITLES } from '@renderer/lib/columnFields'
 import { CollapsibleSection } from './CollapsibleSection'
-import { LaptopIcon, MapPinIcon, PinIcon, ShieldIcon, UploadIcon } from './icons'
+import { LaptopIcon, MapPinIcon, PinIcon, RefreshIcon, ShieldIcon, UploadIcon } from './icons'
 import type { SectionSummary } from '@shared/types/sections'
 
 const ICONS: Record<SectionKind, JSX.Element> = {
@@ -36,6 +37,7 @@ function SectionBody({ kind }: { kind: SectionKind }): JSX.Element {
   const setSection = useAppStore((s) => s.setSection)
   const openColumnPicker = useAppStore((s) => s.openColumnPicker)
   const showToast = useAppStore((s) => s.showToast)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   const handleBrowse = async (): Promise<void> => {
     const result = await browseSection(kind)
@@ -58,6 +60,26 @@ function SectionBody({ kind }: { kind: SectionKind }): JSX.Element {
     openColumnPicker({ kind, headers: result.headers ?? [], guesses: result.guesses ?? {} })
   }
 
+  const handleRefresh = async (): Promise<void> => {
+    setIsRefreshing(true)
+    try {
+      const result = await refreshSection(kind)
+      if (result.status === 'needs-columns') {
+        showToast(`${SECTION_TITLES[kind]}'s columns changed — confirm the new layout.`, 'info')
+        openColumnPicker({ kind, headers: result.headers ?? [], guesses: result.guesses ?? {} })
+        return
+      }
+      setSection(kind, result)
+      if (result.status === 'loaded') {
+        showToast(`${SECTION_TITLES[kind]} refreshed: ${result.count?.toLocaleString()} loaded`, 'success')
+      } else if (result.status === 'error') {
+        showToast(result.message ?? 'Something went wrong.', 'error')
+      }
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
   return (
     <>
       <button
@@ -70,9 +92,20 @@ function SectionBody({ kind }: { kind: SectionKind }): JSX.Element {
       </button>
       <p className="whitespace-pre-line text-xs leading-relaxed text-neutral-400">{statusText(kind, summary)}</p>
       {summary.status === 'loaded' && (
-        <button type="button" onClick={handleChangeColumns} className="text-xs text-kiewit-gold hover:underline">
-          Change columns
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-1 text-xs text-kiewit-gold hover:underline disabled:opacity-50"
+          >
+            <RefreshIcon className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Refreshing…' : 'Refresh'}
+          </button>
+          <button type="button" onClick={handleChangeColumns} className="text-xs text-kiewit-gold hover:underline">
+            Change columns
+          </button>
+        </div>
       )}
     </>
   )

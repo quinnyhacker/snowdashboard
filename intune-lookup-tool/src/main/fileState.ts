@@ -291,6 +291,83 @@ export async function tryAutoLoadDistrict(): Promise<SectionSummary> {
   }
 }
 
+// ---------------- Manual refresh ----------------
+// Re-reads the currently loaded file from disk using its already-confirmed
+// columns, without re-prompting or re-browsing. This is what makes
+// pointing the app at a shared/network file useful: whoever owns that
+// file can overwrite it, and everyone else just hits Refresh.
+
+export async function refreshDevice(): Promise<SectionSummary> {
+  if (!deviceState) return { status: 'empty' }
+  const { filePath, deviceCol, userCol } = deviceState
+  try {
+    const { headers, rows } = await parseCsvFile(filePath)
+    if (rows.length === 0) return { status: 'error', message: 'That file has no rows.' }
+    if (!headers.includes(deviceCol) || !headers.includes(userCol)) {
+      pendingDevicePath = filePath
+      return {
+        status: 'needs-columns',
+        headers,
+        guesses: {
+          deviceCol: findBestColumn(headers, DEVICE_GUESSES.device),
+          userCol: findBestColumn(headers, DEVICE_GUESSES.user)
+        }
+      }
+    }
+    return finalizeDevice(filePath, headers, rows, deviceCol, userCol)
+  } catch {
+    return { status: 'error', message: "Couldn't refresh — the file may be unreachable (e.g. off the network)." }
+  }
+}
+
+export async function refreshLegalHold(): Promise<SectionSummary> {
+  if (!legalHoldState) return { status: 'empty' }
+  const { filePath, firstCol, lastCol } = legalHoldState
+  try {
+    const { headers, rows } = await parseCsvFile(filePath)
+    if (rows.length === 0) return { status: 'error', message: 'That file has no rows.' }
+    if (!headers.includes(firstCol) || !headers.includes(lastCol)) {
+      pendingLegalHoldPath = filePath
+      return {
+        status: 'needs-columns',
+        headers,
+        guesses: {
+          firstCol: findBestColumn(headers, NAME_GUESSES.first),
+          lastCol: findBestColumn(headers, NAME_GUESSES.last)
+        }
+      }
+    }
+    return finalizeLegalHold(filePath, headers, rows, firstCol, lastCol)
+  } catch {
+    return { status: 'error', message: "Couldn't refresh — the file may be unreachable (e.g. off the network)." }
+  }
+}
+
+export async function refreshDistrict(): Promise<SectionSummary> {
+  if (!districtState) return { status: 'empty' }
+  const { filePath, firstCol, lastCol, workCol, homeCol } = districtState
+  try {
+    const { headers, rows } = await parseCsvFile(filePath)
+    if (rows.length === 0) return { status: 'error', message: 'That file has no rows.' }
+    if (![firstCol, lastCol, workCol, homeCol].every((col) => headers.includes(col))) {
+      pendingDistrictPath = filePath
+      return {
+        status: 'needs-columns',
+        headers,
+        guesses: {
+          firstCol: findBestColumn(headers, NAME_GUESSES.first),
+          lastCol: findBestColumn(headers, NAME_GUESSES.last),
+          workCol: findBestColumn(headers, DISTRICT_GUESSES.work),
+          homeCol: findBestColumn(headers, DISTRICT_GUESSES.home)
+        }
+      }
+    }
+    return finalizeDistrict(filePath, headers, rows, firstCol, lastCol, workCol, homeCol)
+  } catch {
+    return { status: 'error', message: "Couldn't refresh — the file may be unreachable (e.g. off the network)." }
+  }
+}
+
 // ---------------- Search ----------------
 
 export function runSearchNow(mode: SearchMode, term: string): SearchResult {

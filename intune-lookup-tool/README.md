@@ -7,6 +7,27 @@ Look up a username to find their device(s), or a device name to find its assigne
 references against a legal hold list and a home/work district list, if loaded, and flags/labels
 results accordingly. Everything is local — CSV files in, a config file in `%APPDATA%`, nothing else.
 
+## Using a shared file for a team
+
+Everyone on a team can point the app at the *same* CSV files on a shared network drive instead of
+their own local copies, so there's one source of truth:
+
+1. Put the exported device CSV (and legal hold / district lists, if used) on a shared network path
+   everyone can reach.
+2. Each teammate, the first time, uses **Load export...** and browses to that shared path instead
+   of a local file. The app remembers that exact path (in their own local
+   `%APPDATA%\IntuneLookupTool\config.json`) and auto-loads from it on every future launch.
+3. Whoever produces the export just re-exports and overwrites the same file at that path
+   periodically (same filename, so everyone's remembered path keeps working).
+4. Everyone else clicks **Refresh** next to a loaded section to re-read the file from disk — no
+   restart, no re-browsing. If the column layout ever changes, Refresh will prompt to re-confirm
+   columns instead of silently breaking.
+
+This needs no new infrastructure — just a network share your team already has access to. There's
+no live/automatic sync from Intune itself; someone still has to periodically re-export and drop the
+file in place. Automating that export via Microsoft Graph, so nobody has to do it by hand, is a
+bigger follow-on step (needs an Entra ID app registration with read-only device/user permissions).
+
 ## What changed from the PowerShell version
 
 - **UI**: black/gold (Kiewit brand) sidebar with animated collapsible sections, toast notifications

@@ -14,6 +14,9 @@ import {
   importDistrict,
   importLegalHold,
   legalHoldColumnsPrompt,
+  refreshDevice,
+  refreshDistrict,
+  refreshLegalHold,
   runSearchNow,
   tryAutoLoadDevice,
   tryAutoLoadDistrict,
@@ -100,6 +103,7 @@ function registerIpcHandlers(): void {
     if (!hasDeviceIndex()) return undefined
     return deviceColumnsPrompt()
   })
+  ipcMain.handle(IPC.deviceRefresh, async () => refreshDevice())
 
   ipcMain.handle(IPC.legalHoldBrowse, async () => {
     const filePath = await pickCsvFile('Select the legal hold list CSV')
@@ -110,6 +114,7 @@ function registerIpcHandlers(): void {
     confirmLegalHoldColumns(columns.firstCol, columns.lastCol)
   )
   ipcMain.handle(IPC.legalHoldChangeColumns, async () => legalHoldColumnsPrompt())
+  ipcMain.handle(IPC.legalHoldRefresh, async () => refreshLegalHold())
 
   ipcMain.handle(IPC.districtBrowse, async () => {
     const filePath = await pickCsvFile('Select the district list CSV (needs first name, last name, work district, and home district columns)')
@@ -122,6 +127,7 @@ function registerIpcHandlers(): void {
       confirmDistrictColumns(columns.firstCol, columns.lastCol, columns.workCol, columns.homeCol)
   )
   ipcMain.handle(IPC.districtChangeColumns, async () => districtColumnsPrompt())
+  ipcMain.handle(IPC.districtRefresh, async () => refreshDistrict())
 
   ipcMain.handle(IPC.searchRun, async (_event, params: { mode: 'user' | 'device'; term: string }) =>
     runSearchNow(params.mode, params.term)
