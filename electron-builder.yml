@@ -1,0 +1,16 @@
+appId: com.kiewit.servicenow-command-center
+productName: ServiceNow Command Center
+directories:
+  output: release
+  buildResources: build
+files:
+  - out/**/*
+  - package.json
+mac:
+  target: dmg
+  category: public.app-category.productivity
+win:
+  target: nsis
+linux:
+  target: AppImage
+  category: Office
