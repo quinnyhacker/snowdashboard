@@ -3,14 +3,14 @@ import { render, screen, within, fireEvent, waitFor } from '@testing-library/rea
 import { useAppStore } from '@renderer/state/store'
 import { BulkLookupPanel } from '../BulkLookupPanel'
 
-function mockApi(runBulk: ReturnType<typeof vi.fn>): void {
+function mockApi(runBulk: ReturnType<typeof vi.fn>, saveBulkCsv: ReturnType<typeof vi.fn> = vi.fn()): void {
   Object.assign(window, {
     api: {
       app: { getInitialState: vi.fn(), setAlwaysOnTop: vi.fn() },
       device: { browse: vi.fn(), confirmColumns: vi.fn(), changeColumns: vi.fn(), refresh: vi.fn() },
       legalHold: { browse: vi.fn(), confirmColumns: vi.fn(), changeColumns: vi.fn(), refresh: vi.fn() },
       district: { browse: vi.fn(), confirmColumns: vi.fn(), changeColumns: vi.fn(), refresh: vi.fn() },
-      search: { run: vi.fn(), runBulk },
+      search: { run: vi.fn(), runBulk, saveBulkCsv },
       sync: { onSectionUpdated: vi.fn() }
     }
   })
@@ -30,8 +30,10 @@ beforeEach(() => {
     bulkInput: '',
     bulkRows: undefined,
     isBulkSearching: false,
+    resultsView: 'flat',
     device: { status: 'loaded', fileName: 'export.csv', count: 3 },
-    viewMode: 'bulk'
+    viewMode: 'bulk',
+    toast: undefined
   })
   Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } })
 })
@@ -223,5 +225,69 @@ describe('BulkLookupPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Clear results' }))
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
     expect(screen.queryByTestId('last-scanned')).not.toBeInTheDocument()
+  })
+
+  it('groups results by district for the seed stock ticket, flagging legal hold devices', async () => {
+    const runBulk = vi.fn().mockResolvedValue([
+      { term: 'A-001', found: true, device: 'A-001', enrichment: { legalHold: false, district: { found: true, work: 'KPE' } } },
+      { term: 'A-002', found: true, device: 'A-002', enrichment: { legalHold: true, district: { found: true, work: 'KPE' } } },
+      { term: 'A-003', found: true, device: 'A-003', enrichment: { legalHold: false, district: { found: true, work: 'TIC' } } }
+    ])
+    mockApi(runBulk)
+    render(<BulkLookupPanel />)
+
+    fireEvent.change(screen.getByPlaceholderText(/LAPTOP-00123/), { target: { value: 'A-001\nA-002\nA-003' } })
+    fireEvent.click(lookUpAllButton())
+    await screen.findByRole('table')
+
+    fireEvent.click(screen.getByRole('button', { name: 'By district (seed stock)' }))
+
+    expect(screen.getByText('KPE')).toBeInTheDocument()
+    expect(screen.getByText('TIC')).toBeInTheDocument()
+    expect(screen.getByText('A-002 (LEGAL HOLD)')).toBeInTheDocument()
+
+    const copyButtons = screen.getAllByRole('button', { name: 'Copy ticket text' })
+    fireEvent.click(copyButtons[0])
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('KPE Seed Stock: A-001, A-002 (LEGAL HOLD)')
+    await waitFor(() => expect(useAppStore.getState().toast?.message).toBe('Copied ticket text to clipboard'))
+  })
+
+  it('saves the bulk results to a CSV file and reports the saved path', async () => {
+    const runBulk = vi.fn().mockResolvedValue([{ term: 'LAPTOP-001', found: true, device: 'LAPTOP-001', enrichment: {} }])
+    const saveBulkCsv = vi.fn().mockResolvedValue({ saved: true, path: 'C:\\recoveries\\hardware-recovery-2026-09-15.csv' })
+    mockApi(runBulk, saveBulkCsv)
+    render(<BulkLookupPanel />)
+
+    fireEvent.change(screen.getByPlaceholderText(/LAPTOP-00123/), { target: { value: 'LAPTOP-001' } })
+    fireEvent.click(lookUpAllButton())
+    const rows = await screen.findByRole('table')
+    expect(rows).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Save CSV/ }))
+
+    await waitFor(() =>
+      expect(saveBulkCsv).toHaveBeenCalledWith({
+        mode: 'device',
+        rows: [{ term: 'LAPTOP-001', found: true, device: 'LAPTOP-001', enrichment: {} }]
+      })
+    )
+    await waitFor(() =>
+      expect(useAppStore.getState().toast?.message).toBe('Saved to C:\\recoveries\\hardware-recovery-2026-09-15.csv')
+    )
+  })
+
+  it('does not toast when the save dialog is canceled', async () => {
+    const runBulk = vi.fn().mockResolvedValue([{ term: 'LAPTOP-001', found: true, device: 'LAPTOP-001', enrichment: {} }])
+    const saveBulkCsv = vi.fn().mockResolvedValue({ saved: false })
+    mockApi(runBulk, saveBulkCsv)
+    render(<BulkLookupPanel />)
+
+    fireEvent.change(screen.getByPlaceholderText(/LAPTOP-00123/), { target: { value: 'LAPTOP-001' } })
+    fireEvent.click(lookUpAllButton())
+    await screen.findByRole('table')
+
+    fireEvent.click(screen.getByRole('button', { name: /Save CSV/ }))
+    await waitFor(() => expect(saveBulkCsv).toHaveBeenCalled())
+    expect(useAppStore.getState().toast).toBeUndefined()
   })
 })

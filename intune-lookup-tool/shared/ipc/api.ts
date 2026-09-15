@@ -33,6 +33,10 @@ export interface PreloadApi {
   search: {
     run: (params: { mode: SearchMode; term: string }) => Promise<SearchResult>
     runBulk: (params: { mode: SearchMode; terms: string[] }) => Promise<BulkSearchRow[]>
+    /** Prompts for a save location and writes the bulk results to disk as
+     * a CSV — the permanent record of a hardware recovery batch. Resolves
+     * with `saved: false` if the technician cancels the save dialog. */
+    saveBulkCsv: (params: { mode: SearchMode; rows: BulkSearchRow[] }) => Promise<{ saved: boolean; path?: string }>
   }
   sync: {
     /** Fires whenever a background poll finds that a loaded file's

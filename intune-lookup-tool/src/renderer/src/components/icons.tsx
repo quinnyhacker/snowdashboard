@@ -82,6 +82,15 @@ export function SearchIcon({ className }: IconProps): JSX.Element {
   )
 }
 
+export function DownloadIcon({ className }: IconProps): JSX.Element {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className={`${base} ${className ?? ''}`}>
+      <path d="M12 4v12M7 11l5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function RefreshIcon({ className }: IconProps): JSX.Element {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className={`${base} ${className ?? ''}`}>

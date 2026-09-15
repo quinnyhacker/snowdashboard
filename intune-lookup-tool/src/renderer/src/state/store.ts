@@ -43,6 +43,9 @@ interface AppState {
   bulkInput: string
   bulkRows: BulkSearchRow[] | undefined
   isBulkSearching: boolean
+  /** How the bulk results are displayed: a flat table, or grouped by
+   * district for building the seed stock ticket text. */
+  resultsView: 'flat' | 'seedStock'
 
   toast: ToastState | undefined
 
@@ -66,6 +69,7 @@ interface AppState {
    * can be mixed in the same session without losing earlier results. */
   appendBulkRows: (rows: BulkSearchRow[]) => void
   setIsBulkSearching: (value: boolean) => void
+  setResultsView: (view: 'flat' | 'seedStock') => void
   showToast: (message: string, tone?: ToastState['tone']) => void
   dismissToast: () => void
 }
@@ -91,6 +95,7 @@ export const useAppStore = create<AppState>((set) => ({
   bulkInput: '',
   bulkRows: undefined,
   isBulkSearching: false,
+  resultsView: 'flat',
 
   toast: undefined,
 
@@ -117,6 +122,7 @@ export const useAppStore = create<AppState>((set) => ({
   setBulkRows: (bulkRows) => set({ bulkRows }),
   appendBulkRows: (rows) => set((s) => ({ bulkRows: [...(s.bulkRows ?? []), ...rows] })),
   setIsBulkSearching: (isBulkSearching) => set({ isBulkSearching }),
+  setResultsView: (resultsView) => set({ resultsView }),
   showToast: (message, tone = 'info') => {
     const id = ++toastCounter
     set({ toast: { id, message, tone } })

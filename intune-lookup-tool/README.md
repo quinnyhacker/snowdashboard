@@ -37,6 +37,19 @@ Pasting or typing a whole list and clicking **Look up all** still works the same
 to the same running results list rather than replacing it — so scanning a few, pasting a few more,
 and scanning some more all accumulate together. Use **Clear results** to start a fresh batch.
 
+### Seed stock view and saving a CSV
+
+Once a batch has results, a toggle switches between **Flat list** (the table of individual devices)
+and **By district (seed stock)** — the found devices grouped by Work District, with a **Copy ticket
+text** button per district that copies exactly the line you'd paste into the seed stock ServiceNow
+ticket, e.g. `KPE Seed Stock: A-23423423, A-345345, A-4534534`. A device on legal hold stays in its
+district's group (nothing is silently left off the list) but is marked `(LEGAL HOLD)` in both the
+chip and the copied ticket text, so shipping it is still a deliberate call by the technician.
+
+**Save CSV** writes the full batch — including anything not found — to a CSV file you choose on
+disk, as a permanent record of the recovery run. This is separate from **Copy all results**, which
+just puts the same data on the clipboard for a quick paste and doesn't leave a file behind.
+
 ### Scanning QR codes instead of typing
 
 The QR code printed on the back of a laptop is a link to the manufacturer's support site, not the

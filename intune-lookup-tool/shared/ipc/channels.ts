@@ -19,6 +19,7 @@ export const IPC = {
 
   searchRun: 'search:run',
   searchRunBulk: 'search:runBulk',
+  searchSaveBulkCsv: 'search:saveBulkCsv',
 
   syncSectionUpdated: 'sync:sectionUpdated'
 } as const

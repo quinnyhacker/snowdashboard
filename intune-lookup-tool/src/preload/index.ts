@@ -33,7 +33,8 @@ const api: PreloadApi = {
   },
   search: {
     run: (params) => ipcRenderer.invoke(IPC.searchRun, params),
-    runBulk: (params) => ipcRenderer.invoke(IPC.searchRunBulk, params)
+    runBulk: (params) => ipcRenderer.invoke(IPC.searchRunBulk, params),
+    saveBulkCsv: (params) => ipcRenderer.invoke(IPC.searchSaveBulkCsv, params)
   },
   sync: {
     onSectionUpdated: (cb) => subscribe(IPC.syncSectionUpdated, cb)

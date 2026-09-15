@@ -1,7 +1,10 @@
 import { join } from 'node:path'
+import { writeFile } from 'node:fs/promises'
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { IPC } from '@shared/ipc/channels'
 import type { InitialState } from '@shared/types/sections'
+import { buildBulkResultsCsv } from '@shared/domain/bulkCsv'
+import type { BulkSearchRow } from '@shared/domain/bulkSearch'
 import { loadConfig, saveConfig } from './config'
 import {
   confirmDeviceColumns,
@@ -61,6 +64,17 @@ async function pickCsvFile(title: string): Promise<string | undefined> {
   })
   if (result.canceled || result.filePaths.length === 0) return undefined
   return result.filePaths[0]
+}
+
+async function pickCsvSaveFile(defaultName: string): Promise<string | undefined> {
+  const cfg = await loadConfig()
+  const result = await dialog.showSaveDialog({
+    title: 'Save bulk lookup results',
+    defaultPath: cfg.LastFolder ? join(cfg.LastFolder, defaultName) : defaultName,
+    filters: [{ name: 'CSV files', extensions: ['csv'] }]
+  })
+  if (result.canceled || !result.filePath) return undefined
+  return result.filePath
 }
 
 function createWindow(): void {
@@ -154,6 +168,17 @@ function registerIpcHandlers(): void {
   ipcMain.handle(IPC.searchRunBulk, async (_event, params: { mode: 'user' | 'device'; terms: string[] }) =>
     runBulkSearchNow(params.mode, params.terms)
   )
+  ipcMain.handle(IPC.searchSaveBulkCsv, async (_event, params: { mode: 'user' | 'device'; rows: BulkSearchRow[] }) => {
+    const defaultName = `hardware-recovery-${new Date().toISOString().slice(0, 10)}.csv`
+    const filePath = await pickCsvSaveFile(defaultName)
+    if (!filePath) return { saved: false }
+
+    const csv = buildBulkResultsCsv(params.rows, params.mode)
+    // A leading BOM keeps Excel from mangling the encoding of any special
+    // characters when it opens the file directly.
+    await writeFile(filePath, '﻿' + csv, 'utf8')
+    return { saved: true, path: filePath }
+  })
 }
 
 app.whenReady().then(() => {
