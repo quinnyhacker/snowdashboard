@@ -66,36 +66,3 @@ export function runBulkSearch(params: RunBulkSearchParams): BulkSearchRow[] {
     }
   })
 }
-
-export interface DistrictGroup {
-  /** undefined groups together rows with no district on record. */
-  district: string | undefined
-  rows: BulkSearchRow[]
-}
-
-/** Groups found rows by work district — the piece of information that
- * actually decides which redeployment stockpile a recovered laptop goes
- * into. Rows without a resolved district (not found in the district list,
- * or blank in the source data) land in one "No district on record" group
- * at the end. Groups are sorted alphabetically by district name so the
- * list matches however the depot's piles are labeled. */
-export function groupByDistrict(rows: BulkSearchRow[]): DistrictGroup[] {
-  const groups = new Map<string | undefined, BulkSearchRow[]>()
-
-  for (const row of rows) {
-    if (!row.found) continue
-    const work = row.enrichment.district?.found ? row.enrichment.district.work : undefined
-    const key = work && work.trim().length > 0 ? work : undefined
-    const bucket = groups.get(key)
-    if (bucket) bucket.push(row)
-    else groups.set(key, [row])
-  }
-
-  const named = Array.from(groups.entries())
-    .filter(([district]) => district !== undefined)
-    .sort(([a], [b]) => (a as string).localeCompare(b as string))
-    .map(([district, groupRows]) => ({ district, rows: groupRows }))
-
-  const unnamed = groups.get(undefined)
-  return unnamed ? [...named, { district: undefined, rows: unnamed }] : named
-}

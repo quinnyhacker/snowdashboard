@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { buildDeviceIndex } from '../lookupIndex'
 import { buildLegalHoldSet } from '../legalHold'
 import { buildDistrictMap } from '../district'
-import { groupByDistrict, parseBulkTerms, runBulkSearch } from '../bulkSearch'
+import { parseBulkTerms, runBulkSearch } from '../bulkSearch'
 
 describe('parseBulkTerms', () => {
   it('splits on newlines', () => {
@@ -70,29 +70,5 @@ describe('runBulkSearch', () => {
   it('preserves duplicate input lines as separate rows', () => {
     const result = runBulkSearch({ mode: 'device', terms: ['LAPTOP-001', 'LAPTOP-001'], index })
     expect(result).toHaveLength(2)
-  })
-})
-
-describe('groupByDistrict', () => {
-  it('groups found rows by work district, sorted alphabetically', () => {
-    const searched = runBulkSearch({ mode: 'device', terms: ['LAPTOP-001', 'LAPTOP-002', 'LAPTOP-003'], index, districtMap })
-    const groups = groupByDistrict(searched)
-    expect(groups.map((g) => g.district)).toEqual(['District 4', 'District 9'])
-    expect(groups[0].rows.map((r) => r.device)).toEqual(['LAPTOP-001', 'LAPTOP-002'])
-    expect(groups[1].rows.map((r) => r.device)).toEqual(['LAPTOP-003'])
-  })
-
-  it('puts rows with no resolvable district in a trailing unnamed group', () => {
-    const searched = runBulkSearch({ mode: 'device', terms: ['LAPTOP-001'], index }) // no districtMap loaded
-    const groups = groupByDistrict(searched)
-    expect(groups).toEqual([{ district: undefined, rows: searched }])
-  })
-
-  it('excludes not-found rows entirely from grouping', () => {
-    const searched = runBulkSearch({ mode: 'device', terms: ['LAPTOP-001', 'LAPTOP-999'], index, districtMap })
-    const groups = groupByDistrict(searched)
-    const allGrouped = groups.flatMap((g) => g.rows)
-    expect(allGrouped).toHaveLength(1)
-    expect(allGrouped[0].term).toBe('LAPTOP-001')
   })
 })

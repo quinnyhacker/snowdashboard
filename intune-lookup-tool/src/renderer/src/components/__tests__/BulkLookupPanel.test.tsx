@@ -36,7 +36,7 @@ describe('BulkLookupPanel', () => {
     expect(screen.getByText('3 entries')).toBeInTheDocument()
   })
 
-  it('runs the bulk search and groups results by district', async () => {
+  it('runs the bulk search and lists each result as its own row with district and legal hold', async () => {
     const runBulk = vi.fn().mockResolvedValue([
       { term: 'LAPTOP-001', found: true, device: 'LAPTOP-001', user: 'jane.doe@kiewit.com', enrichment: { legalHold: false, district: { found: true, work: 'District 4' } } },
       { term: 'LAPTOP-002', found: true, device: 'LAPTOP-002', user: 'john.smith@kiewit.com', enrichment: { legalHold: true, district: { found: true, work: 'District 4' } } },
@@ -50,10 +50,10 @@ describe('BulkLookupPanel', () => {
 
     expect(runBulk).toHaveBeenCalledWith({ mode: 'device', terms: ['LAPTOP-001', 'LAPTOP-002', 'LAPTOP-999'] })
 
-    await screen.findByRole('heading', { level: 3, name: 'District 4 (2)' })
-    expect(screen.getByText('LAPTOP-001')).toBeInTheDocument()
+    await screen.findByText('LAPTOP-001')
     expect(screen.getByText('LAPTOP-002')).toBeInTheDocument()
-    expect(screen.getByText(/1 on legal hold/)).toBeInTheDocument()
+    expect(screen.getAllByText('District 4')).toHaveLength(2)
+    expect(screen.getAllByText('Legal hold').length).toBeGreaterThan(0)
     expect(screen.getByText('1 not found')).toBeInTheDocument()
   })
 

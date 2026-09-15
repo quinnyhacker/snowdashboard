@@ -1,69 +1,52 @@
 import { useMemo } from 'react'
-import { groupByDistrict, parseBulkTerms, type BulkSearchRow } from '@shared/domain/bulkSearch'
+import { parseBulkTerms, type BulkSearchRow } from '@shared/domain/bulkSearch'
 import { useAppStore } from '@renderer/state/store'
 import { buildBulkResultsTsv } from '@renderer/lib/bulkExport'
 import { ModeToggle } from './ModeToggle'
 import { CopyIcon, SearchIcon, ShieldIcon } from './icons'
 
-function Chip({ flagged, children }: { flagged: boolean; children: string }): JSX.Element {
-  return (
-    <span
-      className={`inline-block rounded-full px-3 py-1.5 text-base font-medium ${
-        flagged ? 'bg-red-100 font-semibold text-red-800' : 'bg-neutral-100 text-black'
-      }`}
-    >
-      {children}
-    </span>
-  )
+function LegalHoldCell({ legalHold }: { legalHold: boolean | undefined }): JSX.Element {
+  if (legalHold) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-sm font-semibold text-red-800">
+        <ShieldIcon className="h-3.5 w-3.5" />
+        Legal hold
+      </span>
+    )
+  }
+  if (legalHold === false) return <span className="text-sm text-neutral-400">No</span>
+  return <span className="text-sm text-neutral-300">—</span>
 }
 
-function DistrictGroupCard({
-  district,
-  rows,
-  mode
-}: {
-  district: string | undefined
-  rows: BulkSearchRow[]
-  mode: 'user' | 'device'
-}): JSX.Element {
-  const showToast = useAppStore((s) => s.showToast)
-  const legalHoldCount = rows.filter((r) => r.enrichment.legalHold).length
-
-  const copyList = (): void => {
-    const labels = rows.map((r) => (mode === 'device' ? (r.device ?? r.term) : (r.user ?? r.term)))
-    navigator.clipboard.writeText(labels.join('\n')).then(() => showToast('Copied list to clipboard', 'success'))
-  }
-
+function ResultsTable({ rows, mode }: { rows: BulkSearchRow[]; mode: 'user' | 'device' }): JSX.Element {
   return (
-    <div className="rounded-lg border border-neutral-200 bg-white p-4">
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-lg font-bold text-black">
-          {district ?? 'No district on record'} <span className="font-normal text-neutral-400">({rows.length})</span>
-        </h3>
-        <button
-          type="button"
-          onClick={copyList}
-          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-neutral-300 px-3 py-1.5 text-sm text-neutral-600 hover:bg-neutral-50"
-        >
-          <CopyIcon />
-          Copy list
-        </button>
-      </div>
-
-      {legalHoldCount > 0 && (
-        <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-red-700">
-          <ShieldIcon className="h-4 w-4" />
-          {legalHoldCount} on legal hold — do not redeploy
-        </p>
-      )}
-
-      <div className="mt-3 flex flex-wrap gap-2">
-        {rows.map((row) => (
-          <Chip key={row.term} flagged={Boolean(row.enrichment.legalHold)}>
-            {mode === 'device' ? (row.device ?? row.term) : (row.user ?? row.term)}
-          </Chip>
-        ))}
-      </div>
+    <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+      <table className="w-full border-collapse text-left">
+        <thead>
+          <tr className="border-b border-neutral-200 text-sm text-neutral-500">
+            <th className="px-4 py-2.5 font-semibold">{mode === 'device' ? 'Device' : 'User'}</th>
+            <th className="px-4 py-2.5 font-semibold">{mode === 'device' ? 'User' : 'Device(s)'}</th>
+            <th className="px-4 py-2.5 font-semibold">District</th>
+            <th className="px-4 py-2.5 font-semibold">Legal hold</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.term} className={`border-b border-neutral-100 last:border-0 ${row.enrichment.legalHold ? 'bg-red-50' : ''}`}>
+              <td className="px-4 py-3 text-lg font-semibold text-black">{mode === 'device' ? row.device : row.user}</td>
+              <td className="px-4 py-3 text-base text-neutral-600">
+                {mode === 'device' ? row.user : (row.devices ?? []).join(', ') || '—'}
+              </td>
+              <td className="px-4 py-3 text-base text-black">
+                {row.enrichment.district?.found ? row.enrichment.district.work || '(blank)' : '—'}
+              </td>
+              <td className="px-4 py-3">
+                <LegalHoldCell legalHold={row.enrichment.legalHold} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
@@ -131,7 +114,6 @@ export function BulkLookupPanel(): JSX.Element {
 
   const foundRows = bulkRows?.filter((r) => r.found) ?? []
   const notFoundRows = bulkRows?.filter((r) => !r.found) ?? []
-  const groups = useMemo(() => (bulkRows ? groupByDistrict(bulkRows) : []), [bulkRows])
 
   return (
     <div className="flex h-full flex-col gap-4">
@@ -187,9 +169,7 @@ export function BulkLookupPanel(): JSX.Element {
             </button>
           </div>
 
-          {groups.map((group) => (
-            <DistrictGroupCard key={group.district ?? '__none__'} district={group.district} rows={group.rows} mode={searchMode} />
-          ))}
+          {foundRows.length > 0 && <ResultsTable rows={foundRows} mode={searchMode} />}
 
           <NotFoundList rows={notFoundRows} onInvestigate={investigate} />
         </div>

@@ -13,12 +13,12 @@ Built for hardware recovery: a batch of recovered laptops comes in and each one 
 looked up so the depot can sort it into the right redeployment stockpile.
 
 Switch to **Bulk lookup**, paste or type one device name (or username) per line, and click **Look
-up all**. Results come back grouped by work district — each group is exactly the pile a laptop
-belongs in, with a **Copy list** button per group to grab just those device names for a manifest or
-sticky note. Anything on the legal hold list is called out in red within its group, so it doesn't
-get redeployed by mistake. Anything that didn't match exactly shows up in a "not found" list you
-can click to re-check with the (typo-tolerant) single lookup. **Copy all results** exports the full
-batch as tab-separated text, ready to paste into Excel as a record of what went where.
+up all**. Each line comes back as its own row — device/user, district, and legal hold status —
+so you can see at a glance which pile each recovered laptop belongs in. Legal hold rows are
+highlighted so nothing on hold gets redeployed by mistake. Anything that didn't match exactly shows
+up in a "not found" list you can click to re-check with the (typo-tolerant) single lookup. **Copy
+all results** exports the full batch as tab-separated text, ready to paste into Excel as a record of
+what went where.
 
 Bulk lookup only does exact matching per line — with dozens of laptops at once, silently guessing
 among partial matches would be worse than just flagging a line as not found.
