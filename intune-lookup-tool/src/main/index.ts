@@ -85,6 +85,10 @@ function createWindow(): void {
     minHeight: 560,
     show: false,
     backgroundColor: '#f5f5f5',
+    // electron-builder applies build/icon.ico to the packaged exe/installer
+    // automatically, but that convention doesn't reach the dev window —
+    // set it explicitly so `npm run dev` shows the same icon too.
+    icon: join(__dirname, '../../build/icon.png'),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
