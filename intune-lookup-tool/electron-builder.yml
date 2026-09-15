@@ -9,6 +9,17 @@ files:
   - package.json
 win:
   target: nsis
+nsis:
+  # A silent one-click installer that auto-launches afterward looks a lot
+  # like a malware dropper to endpoint security heuristics and can get
+  # silently blocked with no visible error. A normal installer wizard
+  # (pick a folder, click Install, click Finish) is far less likely to be
+  # flagged, and it's clearer to the person running it what's happening.
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
 mac:
   target: dmg
   category: public.app-category.utilities
