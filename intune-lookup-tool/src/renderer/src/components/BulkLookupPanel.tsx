@@ -26,7 +26,8 @@ function ResultsTable({ rows, mode }: { rows: BulkSearchRow[]; mode: 'user' | 'd
           <tr className="border-b border-neutral-200 text-sm text-neutral-500">
             <th className="px-4 py-2.5 font-semibold">{mode === 'device' ? 'Device' : 'User'}</th>
             <th className="px-4 py-2.5 font-semibold">{mode === 'device' ? 'User' : 'Device(s)'}</th>
-            <th className="px-4 py-2.5 font-semibold">District</th>
+            <th className="px-4 py-2.5 font-semibold">Work District</th>
+            <th className="px-4 py-2.5 font-semibold">Home District</th>
             <th className="px-4 py-2.5 font-semibold">Legal hold</th>
           </tr>
         </thead>
@@ -39,6 +40,9 @@ function ResultsTable({ rows, mode }: { rows: BulkSearchRow[]; mode: 'user' | 'd
               </td>
               <td className="px-4 py-3 text-base text-black">
                 {row.enrichment.district?.found ? row.enrichment.district.work || '(blank)' : '—'}
+              </td>
+              <td className="px-4 py-3 text-base text-black">
+                {row.enrichment.district?.found ? row.enrichment.district.home || '(blank)' : '—'}
               </td>
               <td className="px-4 py-3">
                 <LegalHoldCell legalHold={row.enrichment.legalHold} />

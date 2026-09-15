@@ -57,8 +57,29 @@ describe('BulkLookupPanel', () => {
     expect(screen.getByText('1 not found')).toBeInTheDocument()
   })
 
-  it('switches to single lookup and prefills the term when investigating a not-found entry', async () => {
-    const runBulk = vi.fn().mockResolvedValue([{ term: 'LAPTOP-999', found: false, enrichment: {} }])
+  it('shows both work and home district, even when one is blank', async () => {
+    const runBulk = vi.fn().mockResolvedValue([
+      {
+        term: 'quinn.jones1',
+        found: true,
+        user: 'Quinn.Jones1@kiewit.com',
+        devices: ['A-282QFH4'],
+        enrichment: { legalHold: false, district: { found: true, work: '', home: 'District 7' } }
+      }
+    ])
+    mockApi(runBulk)
+    useAppStore.setState({ searchMode: 'user' })
+    render(<BulkLookupPanel />)
+
+    fireEvent.change(screen.getByPlaceholderText(/jsmith/), { target: { value: 'quinn.jones1' } })
+    fireEvent.click(screen.getByText('Look up all'))
+
+    await screen.findByText('Quinn.Jones1@kiewit.com')
+    expect(screen.getByText('District 7')).toBeInTheDocument()
+    expect(screen.getByText('(blank)')).toBeInTheDocument()
+  })
+
+  it('switches to single lookup and prefills the term when investigating a not-found entry', async () => {    const runBulk = vi.fn().mockResolvedValue([{ term: 'LAPTOP-999', found: false, enrichment: {} }])
     mockApi(runBulk)
     render(<BulkLookupPanel />)
 
