@@ -2,7 +2,6 @@ import { useMemo, useRef } from 'react'
 import type { KeyboardEvent } from 'react'
 import { parseBulkTerms, type BulkSearchRow } from '@shared/domain/bulkSearch'
 import { deviceNameFromScan, normalizeScannedTerm } from '@shared/domain/scanParsing'
-import { buildSeedStockTicketText, groupBulkRowsByDistrict, type SeedStockGroup } from '@shared/domain/seedStock'
 import { useAppStore } from '@renderer/state/store'
 import { buildBulkResultsTsv } from '@renderer/lib/bulkExport'
 import { extractCompletedLineOnEnter } from '@renderer/lib/liveScan'
@@ -122,53 +121,6 @@ function NotFoundList({ rows, onInvestigate }: { rows: BulkSearchRow[]; onInvest
   )
 }
 
-function SeedStockGroups({
-  groups,
-  onCopy
-}: {
-  groups: SeedStockGroup[]
-  onCopy: (text: string) => void
-}): JSX.Element | null {
-  if (groups.length === 0) return null
-  return (
-    <div className="space-y-3">
-      {groups.map((group) => {
-        const ticketText = buildSeedStockTicketText(group)
-        return (
-          <div key={group.district} className="rounded-lg border border-neutral-200 bg-white p-4">
-            <div className="flex items-center justify-between gap-3">
-              <h3 className="text-base font-semibold text-black">
-                {group.district} <span className="font-normal text-neutral-500">({group.entries.length})</span>
-              </h3>
-              <button
-                type="button"
-                onClick={() => onCopy(ticketText)}
-                className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-neutral-300 px-3 py-1.5 text-sm text-neutral-600 hover:bg-neutral-50"
-              >
-                <CopyIcon />
-                Copy ticket text
-              </button>
-            </div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {group.entries.map((entry, index) => (
-                <span
-                  key={`${entry.name}-${index}`}
-                  className={`rounded-full px-2.5 py-1 text-sm font-medium ${
-                    entry.legalHold ? 'bg-red-100 text-red-800' : 'bg-neutral-100 text-neutral-700'
-                  }`}
-                >
-                  {entry.name}
-                  {entry.legalHold && ' (LEGAL HOLD)'}
-                </span>
-              ))}
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
 export function BulkLookupPanel(): JSX.Element {
   const searchMode = useAppStore((s) => s.searchMode)
   const bulkInput = useAppStore((s) => s.bulkInput)
@@ -178,8 +130,6 @@ export function BulkLookupPanel(): JSX.Element {
   const appendBulkRows = useAppStore((s) => s.appendBulkRows)
   const isBulkSearching = useAppStore((s) => s.isBulkSearching)
   const setIsBulkSearching = useAppStore((s) => s.setIsBulkSearching)
-  const resultsView = useAppStore((s) => s.resultsView)
-  const setResultsView = useAppStore((s) => s.setResultsView)
   const device = useAppStore((s) => s.device)
   const showToast = useAppStore((s) => s.showToast)
   const setViewMode = useAppStore((s) => s.setViewMode)
@@ -229,10 +179,6 @@ export function BulkLookupPanel(): JSX.Element {
     navigator.clipboard.writeText(buildBulkResultsTsv(bulkRows, searchMode)).then(() => showToast('Copied results to clipboard', 'success'))
   }
 
-  const copyTicketText = (text: string): void => {
-    navigator.clipboard.writeText(text).then(() => showToast('Copied ticket text to clipboard', 'success'))
-  }
-
   const saveCsv = async (): Promise<void> => {
     if (!bulkRows) return
     try {
@@ -256,7 +202,6 @@ export function BulkLookupPanel(): JSX.Element {
   const foundRows = bulkRows?.filter((r) => r.found) ?? []
   const notFoundRows = bulkRows?.filter((r) => !r.found) ?? []
   const lastRow = bulkRows && bulkRows.length > 0 ? bulkRows[bulkRows.length - 1] : undefined
-  const seedStockGroups = useMemo(() => groupBulkRowsByDistrict(bulkRows ?? [], searchMode), [bulkRows, searchMode])
 
   return (
     <div className="flex h-full flex-col gap-4">
@@ -310,20 +255,6 @@ export function BulkLookupPanel(): JSX.Element {
               {foundRows.length} found{notFoundRows.length > 0 ? `, ${notFoundRows.length} not found` : ''}
             </p>
             <div className="flex flex-wrap items-center gap-2">
-              <div className="inline-flex rounded-lg border border-neutral-300 bg-white p-1">
-                {(['flat', 'seedStock'] as const).map((view) => (
-                  <button
-                    key={view}
-                    type="button"
-                    onClick={() => setResultsView(view)}
-                    className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${
-                      resultsView === view ? 'bg-kiewit-gold text-black' : 'text-neutral-600 hover:bg-neutral-100'
-                    }`}
-                  >
-                    {view === 'flat' ? 'Flat list' : 'By district (seed stock)'}
-                  </button>
-                ))}
-              </div>
               <button
                 type="button"
                 onClick={copyAll}
@@ -350,14 +281,8 @@ export function BulkLookupPanel(): JSX.Element {
             </div>
           </div>
 
-          {resultsView === 'seedStock' ? (
-            <SeedStockGroups groups={seedStockGroups} onCopy={copyTicketText} />
-          ) : (
-            <>
-              {foundRows.length > 0 && <ResultsTable rows={foundRows} mode={searchMode} />}
-              <NotFoundList rows={notFoundRows} onInvestigate={investigate} />
-            </>
-          )}
+          {foundRows.length > 0 && <ResultsTable rows={foundRows} mode={searchMode} />}
+          <NotFoundList rows={notFoundRows} onInvestigate={investigate} />
         </div>
       )}
     </div>

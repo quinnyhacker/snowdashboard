@@ -30,7 +30,6 @@ beforeEach(() => {
     bulkInput: '',
     bulkRows: undefined,
     isBulkSearching: false,
-    resultsView: 'flat',
     device: { status: 'loaded', fileName: 'export.csv', count: 3 },
     viewMode: 'bulk',
     toast: undefined
@@ -225,31 +224,6 @@ describe('BulkLookupPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Clear results' }))
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
     expect(screen.queryByTestId('last-scanned')).not.toBeInTheDocument()
-  })
-
-  it('groups results by district for the seed stock ticket, flagging legal hold devices', async () => {
-    const runBulk = vi.fn().mockResolvedValue([
-      { term: 'A-001', found: true, device: 'A-001', enrichment: { legalHold: false, district: { found: true, work: 'KPE' } } },
-      { term: 'A-002', found: true, device: 'A-002', enrichment: { legalHold: true, district: { found: true, work: 'KPE' } } },
-      { term: 'A-003', found: true, device: 'A-003', enrichment: { legalHold: false, district: { found: true, work: 'TIC' } } }
-    ])
-    mockApi(runBulk)
-    render(<BulkLookupPanel />)
-
-    fireEvent.change(screen.getByPlaceholderText(/LAPTOP-00123/), { target: { value: 'A-001\nA-002\nA-003' } })
-    fireEvent.click(lookUpAllButton())
-    await screen.findByRole('table')
-
-    fireEvent.click(screen.getByRole('button', { name: 'By district (seed stock)' }))
-
-    expect(screen.getByText('KPE')).toBeInTheDocument()
-    expect(screen.getByText('TIC')).toBeInTheDocument()
-    expect(screen.getByText('A-002 (LEGAL HOLD)')).toBeInTheDocument()
-
-    const copyButtons = screen.getAllByRole('button', { name: 'Copy ticket text' })
-    fireEvent.click(copyButtons[0])
-    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('KPE Seed Stock: A-001, A-002 (LEGAL HOLD)')
-    await waitFor(() => expect(useAppStore.getState().toast?.message).toBe('Copied ticket text to clipboard'))
   })
 
   it('saves the bulk results to a CSV file and reports the saved path', async () => {
