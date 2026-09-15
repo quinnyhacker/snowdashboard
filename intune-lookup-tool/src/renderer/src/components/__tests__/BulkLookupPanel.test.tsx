@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { useAppStore } from '@renderer/state/store'
 import { BulkLookupPanel } from '../BulkLookupPanel'
 
@@ -79,7 +79,8 @@ describe('BulkLookupPanel', () => {
     expect(screen.getByText('(blank)')).toBeInTheDocument()
   })
 
-  it('switches to single lookup and prefills the term when investigating a not-found entry', async () => {    const runBulk = vi.fn().mockResolvedValue([{ term: 'LAPTOP-999', found: false, enrichment: {} }])
+  it('switches to single lookup and prefills the term when investigating a not-found entry', async () => {
+    const runBulk = vi.fn().mockResolvedValue([{ term: 'LAPTOP-999', found: false, enrichment: {} }])
     mockApi(runBulk)
     render(<BulkLookupPanel />)
 
@@ -91,6 +92,21 @@ describe('BulkLookupPanel', () => {
 
     expect(useAppStore.getState().viewMode).toBe('single')
     expect(useAppStore.getState().searchTerm).toBe('LAPTOP-999')
+  })
+
+  it('converts scanned QR URLs into device names before looking them up', async () => {
+    const runBulk = vi.fn().mockResolvedValue([])
+    mockApi(runBulk)
+    render(<BulkLookupPanel />)
+
+    fireEvent.change(screen.getByPlaceholderText(/LAPTOP-00123/), {
+      target: { value: 'https://www.dell.com/support/pid?s=q3&t=282QFH4\nLAPTOP-002' }
+    })
+    expect(screen.getByText(/2 entries/)).toBeInTheDocument()
+    expect(screen.getByText(/1 from scans/)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('Look up all'))
+    await waitFor(() => expect(runBulk).toHaveBeenCalledWith({ mode: 'device', terms: ['A-282QFH4', 'LAPTOP-002'] }))
   })
 
   it('disables Look up all until a device export is loaded', () => {

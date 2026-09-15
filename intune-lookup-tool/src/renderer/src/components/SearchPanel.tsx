@@ -1,3 +1,5 @@
+import { useMemo } from 'react'
+import { deviceNameFromScan, normalizeScannedTerm } from '@shared/domain/scanParsing'
 import { useAppStore } from '@renderer/state/store'
 import { SearchIcon } from './icons'
 import { ModeToggle } from './ModeToggle'
@@ -11,11 +13,13 @@ export function SearchPanel(): JSX.Element {
   const setSearchResult = useAppStore((s) => s.setSearchResult)
   const device = useAppStore((s) => s.device)
 
+  const recognizedScan = useMemo(() => deviceNameFromScan(searchTerm), [searchTerm])
+
   const runSearch = async (): Promise<void> => {
     if (!searchTerm.trim()) return
     setIsSearching(true)
     try {
-      const result = await window.api.search.run({ mode: searchMode, term: searchTerm })
+      const result = await window.api.search.run({ mode: searchMode, term: normalizeScannedTerm(searchTerm) })
       setSearchResult(result)
     } finally {
       setIsSearching(false)
@@ -42,7 +46,7 @@ export function SearchPanel(): JSX.Element {
         <input
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder={searchMode === 'user' ? 'e.g. jdoe or jdoe@kiewit.com' : 'e.g. LAPTOP-00123'}
+          placeholder={searchMode === 'user' ? 'e.g. jdoe or jdoe@kiewit.com' : 'e.g. LAPTOP-00123, or scan a QR code'}
           className="w-full max-w-sm rounded-lg border border-neutral-300 px-3 py-2 text-base focus:border-kiewit-gold focus:outline-none focus:ring-1 focus:ring-kiewit-gold"
         />
         <button
@@ -55,6 +59,7 @@ export function SearchPanel(): JSX.Element {
         </button>
       </form>
 
+      {recognizedScan && <p className="mt-2 text-sm font-medium text-emerald-600">Recognized from scan: {recognizedScan}</p>}
       {noDeviceLoaded && <p className="mt-2 text-xs text-neutral-400">Load a device export first.</p>}
     </div>
   )

@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { parseBulkTerms, type BulkSearchRow } from '@shared/domain/bulkSearch'
+import { deviceNameFromScan, normalizeScannedTerm } from '@shared/domain/scanParsing'
 import { useAppStore } from '@renderer/state/store'
 import { buildBulkResultsTsv } from '@renderer/lib/bulkExport'
 import { ModeToggle } from './ModeToggle'
@@ -91,7 +92,9 @@ export function BulkLookupPanel(): JSX.Element {
   const setSearchTerm = useAppStore((s) => s.setSearchTerm)
   const setSearchResult = useAppStore((s) => s.setSearchResult)
 
-  const terms = useMemo(() => parseBulkTerms(bulkInput), [bulkInput])
+  const rawTerms = useMemo(() => parseBulkTerms(bulkInput), [bulkInput])
+  const terms = useMemo(() => rawTerms.map(normalizeScannedTerm), [rawTerms])
+  const scannedCount = useMemo(() => rawTerms.filter((t) => deviceNameFromScan(t) !== undefined).length, [rawTerms])
   const noDeviceLoaded = device.status !== 'loaded'
 
   const runBulk = async (): Promise<void> => {
@@ -124,7 +127,8 @@ export function BulkLookupPanel(): JSX.Element {
       <div>
         <h2 className="text-2xl font-bold text-black">Bulk lookup</h2>
         <p className="mt-1 text-sm text-neutral-500">
-          Paste or type one device name (or username) per line — handy for sorting a batch of recovered laptops by district.
+          Paste or type one device name (or username) per line — or scan the QR code on the back of a Dell laptop directly into the box.
+          Handy for sorting a batch of recovered laptops by district.
         </p>
       </div>
 
@@ -142,7 +146,10 @@ export function BulkLookupPanel(): JSX.Element {
           className="w-full max-w-md rounded-lg border border-neutral-300 p-3 font-mono text-sm focus:border-kiewit-gold focus:outline-none focus:ring-1 focus:ring-kiewit-gold"
         />
         <div className="flex flex-col justify-between">
-          <p className="text-sm text-neutral-500">{terms.length} {terms.length === 1 ? 'entry' : 'entries'}</p>
+          <p className="text-sm text-neutral-500">
+            {terms.length} {terms.length === 1 ? 'entry' : 'entries'}
+            {scannedCount > 0 && <span className="text-emerald-600"> · {scannedCount} from scans</span>}
+          </p>
           <button
             type="button"
             onClick={runBulk}

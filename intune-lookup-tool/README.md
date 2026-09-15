@@ -23,6 +23,22 @@ what went where.
 Bulk lookup only does exact matching per line — with dozens of laptops at once, silently guessing
 among partial matches would be worse than just flagging a line as not found.
 
+### Scanning QR codes instead of typing
+
+The QR code printed on the back of a laptop is a link to the manufacturer's support site, not the
+device name itself — but a handheld scanner just "types" that decoded link wherever the cursor is,
+the same way a barcode scanner does. Point the cursor at the search box (single lookup) or the bulk
+textarea and scan directly: the app recognizes the manufacturer's URL, pulls the service tag back
+out of it, and looks up `A-<tag>` (this org's device naming convention) automatically instead of
+searching for the raw URL.
+
+Currently recognized: **Dell** (`dell.com/support/pid?...&t=<tag>` links). Lenovo and HP aren't
+wired up yet — each vendor formats this URL differently, and getting it wrong would silently
+produce the wrong device name, which is worse than not supporting it. Recognition logic lives in
+`shared/domain/scanParsing.ts`; extending it to another vendor just needs one real example of that
+vendor's decoded QR link to confirm the URL shape before adding it.
+
+
 ## Using a shared file for a team
 
 Everyone on a team can point the app at the *same* CSV files on a shared network drive instead of
