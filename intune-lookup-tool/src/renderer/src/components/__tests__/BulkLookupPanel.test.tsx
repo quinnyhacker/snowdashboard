@@ -1,0 +1,82 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { useAppStore } from '@renderer/state/store'
+import { BulkLookupPanel } from '../BulkLookupPanel'
+
+function mockApi(runBulk: ReturnType<typeof vi.fn>): void {
+  Object.assign(window, {
+    api: {
+      app: { getInitialState: vi.fn(), setAlwaysOnTop: vi.fn() },
+      device: { browse: vi.fn(), confirmColumns: vi.fn(), changeColumns: vi.fn(), refresh: vi.fn() },
+      legalHold: { browse: vi.fn(), confirmColumns: vi.fn(), changeColumns: vi.fn(), refresh: vi.fn() },
+      district: { browse: vi.fn(), confirmColumns: vi.fn(), changeColumns: vi.fn(), refresh: vi.fn() },
+      search: { run: vi.fn(), runBulk },
+      sync: { onSectionUpdated: vi.fn() }
+    }
+  })
+}
+
+beforeEach(() => {
+  useAppStore.setState({
+    searchMode: 'device',
+    bulkInput: '',
+    bulkRows: undefined,
+    isBulkSearching: false,
+    device: { status: 'loaded', fileName: 'export.csv', count: 3 },
+    viewMode: 'bulk'
+  })
+  Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } })
+})
+
+describe('BulkLookupPanel', () => {
+  it('counts parsed entries as the technician types', () => {
+    mockApi(vi.fn())
+    render(<BulkLookupPanel />)
+    fireEvent.change(screen.getByPlaceholderText(/LAPTOP-00123/), { target: { value: 'LAPTOP-001\nLAPTOP-002\n\nLAPTOP-003' } })
+    expect(screen.getByText('3 entries')).toBeInTheDocument()
+  })
+
+  it('runs the bulk search and groups results by district', async () => {
+    const runBulk = vi.fn().mockResolvedValue([
+      { term: 'LAPTOP-001', found: true, device: 'LAPTOP-001', user: 'jane.doe@kiewit.com', enrichment: { legalHold: false, district: { found: true, work: 'District 4' } } },
+      { term: 'LAPTOP-002', found: true, device: 'LAPTOP-002', user: 'john.smith@kiewit.com', enrichment: { legalHold: true, district: { found: true, work: 'District 4' } } },
+      { term: 'LAPTOP-999', found: false, enrichment: {} }
+    ])
+    mockApi(runBulk)
+    render(<BulkLookupPanel />)
+
+    fireEvent.change(screen.getByPlaceholderText(/LAPTOP-00123/), { target: { value: 'LAPTOP-001\nLAPTOP-002\nLAPTOP-999' } })
+    fireEvent.click(screen.getByText('Look up all'))
+
+    expect(runBulk).toHaveBeenCalledWith({ mode: 'device', terms: ['LAPTOP-001', 'LAPTOP-002', 'LAPTOP-999'] })
+
+    await screen.findByRole('heading', { level: 3, name: 'District 4 (2)' })
+    expect(screen.getByText('LAPTOP-001')).toBeInTheDocument()
+    expect(screen.getByText('LAPTOP-002')).toBeInTheDocument()
+    expect(screen.getByText(/1 on legal hold/)).toBeInTheDocument()
+    expect(screen.getByText('1 not found')).toBeInTheDocument()
+  })
+
+  it('switches to single lookup and prefills the term when investigating a not-found entry', async () => {
+    const runBulk = vi.fn().mockResolvedValue([{ term: 'LAPTOP-999', found: false, enrichment: {} }])
+    mockApi(runBulk)
+    render(<BulkLookupPanel />)
+
+    fireEvent.change(screen.getByPlaceholderText(/LAPTOP-00123/), { target: { value: 'LAPTOP-999' } })
+    fireEvent.click(screen.getByText('Look up all'))
+
+    const investigateButton = await screen.findByRole('button', { name: 'LAPTOP-999' })
+    fireEvent.click(investigateButton)
+
+    expect(useAppStore.getState().viewMode).toBe('single')
+    expect(useAppStore.getState().searchTerm).toBe('LAPTOP-999')
+  })
+
+  it('disables Look up all until a device export is loaded', () => {
+    useAppStore.setState({ device: { status: 'empty' } })
+    mockApi(vi.fn())
+    render(<BulkLookupPanel />)
+    fireEvent.change(screen.getByPlaceholderText(/LAPTOP-00123/), { target: { value: 'LAPTOP-001' } })
+    expect(screen.getByText('Look up all')).toBeDisabled()
+  })
+})

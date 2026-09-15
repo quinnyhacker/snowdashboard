@@ -50,7 +50,7 @@ export interface NoMatchResult {
 
 export type SearchResult = ExactMatchResult | PartialMatchResult | NoMatchResult
 
-function enrich(userString: string, legalHoldSet?: Set<string>, districtMap?: DistrictMap): MatchEnrichment {
+export function enrich(userString: string, legalHoldSet?: Set<string>, districtMap?: DistrictMap): MatchEnrichment {
   return {
     legalHold: legalHoldSet ? isOnLegalHold(legalHoldSet, userString) : undefined,
     district: districtMap ? getDistrict(districtMap, userString) : undefined

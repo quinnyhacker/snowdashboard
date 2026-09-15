@@ -32,7 +32,8 @@ const api: PreloadApi = {
     refresh: () => ipcRenderer.invoke(IPC.districtRefresh)
   },
   search: {
-    run: (params) => ipcRenderer.invoke(IPC.searchRun, params)
+    run: (params) => ipcRenderer.invoke(IPC.searchRun, params),
+    runBulk: (params) => ipcRenderer.invoke(IPC.searchRunBulk, params)
   },
   sync: {
     onSectionUpdated: (cb) => subscribe(IPC.syncSectionUpdated, cb)

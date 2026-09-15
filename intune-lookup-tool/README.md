@@ -7,6 +7,22 @@ Look up a username to find their device(s), or a device name to find its assigne
 references against a legal hold list and a home/work district list, if loaded, and flags/labels
 results accordingly. Everything is local — CSV files in, a config file in `%APPDATA%`, nothing else.
 
+## Bulk lookup
+
+Built for hardware recovery: a batch of recovered laptops comes in and each one needs its district
+looked up so the depot can sort it into the right redeployment stockpile.
+
+Switch to **Bulk lookup**, paste or type one device name (or username) per line, and click **Look
+up all**. Results come back grouped by work district — each group is exactly the pile a laptop
+belongs in, with a **Copy list** button per group to grab just those device names for a manifest or
+sticky note. Anything on the legal hold list is called out in red within its group, so it doesn't
+get redeployed by mistake. Anything that didn't match exactly shows up in a "not found" list you
+can click to re-check with the (typo-tolerant) single lookup. **Copy all results** exports the full
+batch as tab-separated text, ready to paste into Excel as a record of what went where.
+
+Bulk lookup only does exact matching per line — with dozens of laptops at once, silently guessing
+among partial matches would be worse than just flagging a line as not found.
+
 ## Using a shared file for a team
 
 Everyone on a team can point the app at the *same* CSV files on a shared network drive instead of

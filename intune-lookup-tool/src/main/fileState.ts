@@ -4,6 +4,7 @@ import { findBestColumn } from '@shared/domain/columnGuess'
 import { buildDeviceIndex, type CsvRow, type DeviceIndex } from '@shared/domain/lookupIndex'
 import { buildLegalHoldSet } from '@shared/domain/legalHold'
 import { buildDistrictMap, type DistrictMap } from '@shared/domain/district'
+import { runBulkSearch, type BulkSearchRow } from '@shared/domain/bulkSearch'
 import { runSearch, type SearchMode, type SearchResult } from '@shared/domain/search'
 import type { SectionKind, SectionSummary } from '@shared/types/sections'
 import { loadConfig, saveConfig } from './config'
@@ -430,6 +431,19 @@ export function runSearchNow(mode: SearchMode, term: string): SearchResult {
   return runSearch({
     mode,
     term,
+    index: deviceState.index,
+    legalHoldSet: legalHoldState?.set,
+    districtMap: districtState?.map
+  })
+}
+
+export function runBulkSearchNow(mode: SearchMode, terms: string[]): BulkSearchRow[] {
+  if (!deviceState) {
+    return terms.map((term) => ({ term, found: false, enrichment: {} }))
+  }
+  return runBulkSearch({
+    mode,
+    terms,
     index: deviceState.index,
     legalHoldSet: legalHoldState?.set,
     districtMap: districtState?.map

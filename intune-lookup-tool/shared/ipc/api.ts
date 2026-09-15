@@ -1,5 +1,6 @@
 import type { InitialState, SectionKind, SectionSummary } from '../types/sections'
 import type { SearchMode, SearchResult } from '../domain/search'
+import type { BulkSearchRow } from '../domain/bulkSearch'
 
 export interface SectionUpdate {
   kind: SectionKind
@@ -31,6 +32,7 @@ export interface PreloadApi {
   }
   search: {
     run: (params: { mode: SearchMode; term: string }) => Promise<SearchResult>
+    runBulk: (params: { mode: SearchMode; terms: string[] }) => Promise<BulkSearchRow[]>
   }
   sync: {
     /** Fires whenever a background poll finds that a loaded file's

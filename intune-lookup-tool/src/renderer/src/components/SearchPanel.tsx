@@ -1,9 +1,9 @@
 import { useAppStore } from '@renderer/state/store'
 import { SearchIcon } from './icons'
+import { ModeToggle } from './ModeToggle'
 
 export function SearchPanel(): JSX.Element {
   const searchMode = useAppStore((s) => s.searchMode)
-  const setSearchMode = useAppStore((s) => s.setSearchMode)
   const searchTerm = useAppStore((s) => s.searchTerm)
   const setSearchTerm = useAppStore((s) => s.setSearchTerm)
   const isSearching = useAppStore((s) => s.isSearching)
@@ -28,19 +28,8 @@ export function SearchPanel(): JSX.Element {
     <div>
       <h2 className="text-2xl font-bold text-black">Look up</h2>
 
-      <div className="mt-4 inline-flex rounded-lg border border-neutral-300 bg-white p-1">
-        {(['user', 'device'] as const).map((mode) => (
-          <button
-            key={mode}
-            type="button"
-            onClick={() => setSearchMode(mode)}
-            className={`rounded-md px-4 py-1.5 text-sm font-semibold transition ${
-              searchMode === mode ? 'bg-kiewit-gold text-black' : 'text-neutral-600 hover:bg-neutral-100'
-            }`}
-          >
-            {mode === 'user' ? 'By user' : 'By device name'}
-          </button>
-        ))}
+      <div className="mt-4">
+        <ModeToggle />
       </div>
 
       <form

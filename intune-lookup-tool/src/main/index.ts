@@ -18,6 +18,7 @@ import {
   refreshDevice,
   refreshDistrict,
   refreshLegalHold,
+  runBulkSearchNow,
   runSearchNow,
   tryAutoLoadDevice,
   tryAutoLoadDistrict,
@@ -149,6 +150,9 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC.searchRun, async (_event, params: { mode: 'user' | 'device'; term: string }) =>
     runSearchNow(params.mode, params.term)
+  )
+  ipcMain.handle(IPC.searchRunBulk, async (_event, params: { mode: 'user' | 'device'; terms: string[] }) =>
+    runBulkSearchNow(params.mode, params.terms)
   )
 }
 

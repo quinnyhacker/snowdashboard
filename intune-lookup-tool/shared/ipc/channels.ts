@@ -18,6 +18,7 @@ export const IPC = {
   districtRefresh: 'district:refresh',
 
   searchRun: 'search:run',
+  searchRunBulk: 'search:runBulk',
 
   syncSectionUpdated: 'sync:sectionUpdated'
 } as const

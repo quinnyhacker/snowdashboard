@@ -1,8 +1,11 @@
 import { create } from 'zustand'
 import type { SearchMode, SearchResult } from '@shared/domain/search'
+import type { BulkSearchRow } from '@shared/domain/bulkSearch'
 import type { SectionKind, SectionSummary } from '@shared/types/sections'
 
 export type { SectionKind }
+
+export type ViewMode = 'single' | 'bulk'
 
 export interface ColumnPickerState {
   kind: SectionKind
@@ -36,6 +39,11 @@ interface AppState {
   searchResult: SearchResult | undefined
   isSearching: boolean
 
+  viewMode: ViewMode
+  bulkInput: string
+  bulkRows: BulkSearchRow[] | undefined
+  isBulkSearching: boolean
+
   toast: ToastState | undefined
 
   setSection: (kind: SectionKind, summary: SectionSummary) => void
@@ -49,6 +57,10 @@ interface AppState {
   setSearchTerm: (term: string) => void
   setSearchResult: (result: SearchResult | undefined) => void
   setIsSearching: (value: boolean) => void
+  setViewMode: (mode: ViewMode) => void
+  setBulkInput: (value: string) => void
+  setBulkRows: (rows: BulkSearchRow[] | undefined) => void
+  setIsBulkSearching: (value: boolean) => void
   showToast: (message: string, tone?: ToastState['tone']) => void
   dismissToast: () => void
 }
@@ -70,6 +82,11 @@ export const useAppStore = create<AppState>((set) => ({
   searchResult: undefined,
   isSearching: false,
 
+  viewMode: 'single',
+  bulkInput: '',
+  bulkRows: undefined,
+  isBulkSearching: false,
+
   toast: undefined,
 
   setSection: (kind, summary) =>
@@ -90,6 +107,10 @@ export const useAppStore = create<AppState>((set) => ({
   setSearchTerm: (searchTerm) => set({ searchTerm }),
   setSearchResult: (searchResult) => set({ searchResult }),
   setIsSearching: (isSearching) => set({ isSearching }),
+  setViewMode: (viewMode) => set({ viewMode }),
+  setBulkInput: (bulkInput) => set({ bulkInput }),
+  setBulkRows: (bulkRows) => set({ bulkRows }),
+  setIsBulkSearching: (isBulkSearching) => set({ isBulkSearching }),
   showToast: (message, tone = 'info') => {
     const id = ++toastCounter
     set({ toast: { id, message, tone } })
