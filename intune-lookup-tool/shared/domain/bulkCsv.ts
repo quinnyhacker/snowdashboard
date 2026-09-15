@@ -1,9 +1,16 @@
 import type { BulkSearchRow } from './bulkSearch'
 import type { SearchMode } from './search'
 
+// Excel (and other spreadsheet apps) treat a cell starting with one of
+// these characters as a formula, not text — a term a technician typed or
+// scanned could otherwise execute code when the CSV is opened. Prefixing
+// with a single quote forces it to display as plain text instead.
+const FORMULA_TRIGGER = /^[=+\-@\t\r]/
+
 function csvField(value: string): string {
-  if (/[",\r\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`
-  return value
+  const safe = FORMULA_TRIGGER.test(value) ? `'${value}` : value
+  if (/[",\r\n]/.test(safe)) return `"${safe.replace(/"/g, '""')}"`
+  return safe
 }
 
 /** Builds the full bulk lookup results as real CSV text (CRLF line

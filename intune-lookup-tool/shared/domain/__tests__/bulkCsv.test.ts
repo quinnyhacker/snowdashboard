@@ -43,4 +43,13 @@ describe('buildBulkResultsCsv', () => {
     const csv = buildBulkResultsCsv(rows, 'device')
     expect(csv.split('\r\n')[1]).toBe('A-001,A-001,"Doe, Jane",,,No,Found')
   })
+
+  it.each(['=SUM(A1:A10)', '+1+1', '-1+1', '@SUM(A1)'])(
+    'neutralizes a leading formula trigger (%s) so Excel treats it as text, not a formula',
+    (value) => {
+      const rows: BulkSearchRow[] = [{ term: value, found: false, enrichment: {} }]
+      const csv = buildBulkResultsCsv(rows, 'device')
+      expect(csv.split('\r\n')[1]).toBe(`'${value},,,,,,Not found`)
+    }
+  )
 })
