@@ -32,11 +32,12 @@ textarea and scan directly: the app recognizes the manufacturer's URL, pulls the
 out of it, and looks up `A-<tag>` (this org's device naming convention) automatically instead of
 searching for the raw URL.
 
-Currently recognized: **Dell** (`dell.com/support/pid?...&t=<tag>` links). Lenovo and HP aren't
-wired up yet — each vendor formats this URL differently, and getting it wrong would silently
-produce the wrong device name, which is worse than not supporting it. Recognition logic lives in
-`shared/domain/scanParsing.ts`; extending it to another vendor just needs one real example of that
-vendor's decoded QR link to confirm the URL shape before adding it.
+Currently recognized: **Dell** (`dell.com/support/pid?...&t=<tag>` links) and **Lenovo**
+(`lenovo.com/qrcode/<serial>/<machine-type-model>` links). HP isn't wired up yet — each vendor
+formats this URL differently, and getting it wrong would silently produce the wrong device name,
+which is worse than not supporting it. Recognition logic lives in `shared/domain/scanParsing.ts`;
+extending it to another vendor just needs one real example of that vendor's decoded QR link to
+confirm the URL shape before adding it.
 
 
 ## Using a shared file for a team

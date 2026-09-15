@@ -100,13 +100,17 @@ describe('BulkLookupPanel', () => {
     render(<BulkLookupPanel />)
 
     fireEvent.change(screen.getByPlaceholderText(/LAPTOP-00123/), {
-      target: { value: 'https://www.dell.com/support/pid?s=q3&t=282QFH4\nLAPTOP-002' }
+      target: {
+        value: 'https://www.dell.com/support/pid?s=q3&t=282QFH4\nLAPTOP-002\nhttps://uatesupport.lenovo.com/qrcode/PF5A2W5D/21G3S04W00'
+      }
     })
-    expect(screen.getByText(/2 entries/)).toBeInTheDocument()
-    expect(screen.getByText(/1 from scans/)).toBeInTheDocument()
+    expect(screen.getByText(/3 entries/)).toBeInTheDocument()
+    expect(screen.getByText(/2 from scans/)).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('Look up all'))
-    await waitFor(() => expect(runBulk).toHaveBeenCalledWith({ mode: 'device', terms: ['A-282QFH4', 'LAPTOP-002'] }))
+    await waitFor(() =>
+      expect(runBulk).toHaveBeenCalledWith({ mode: 'device', terms: ['A-282QFH4', 'LAPTOP-002', 'A-PF5A2W5D'] })
+    )
   })
 
   it('disables Look up all until a device export is loaded', () => {

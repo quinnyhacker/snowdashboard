@@ -127,7 +127,7 @@ export function BulkLookupPanel(): JSX.Element {
       <div>
         <h2 className="text-2xl font-bold text-black">Bulk lookup</h2>
         <p className="mt-1 text-sm text-neutral-500">
-          Paste or type one device name (or username) per line — or scan the QR code on the back of a Dell laptop directly into the box.
+          Paste or type one device name (or username) per line — or scan the QR code on the back of a Dell or Lenovo laptop directly into the box.
           Handy for sorting a batch of recovered laptops by district.
         </p>
       </div>

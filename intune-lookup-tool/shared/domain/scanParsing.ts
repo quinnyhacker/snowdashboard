@@ -28,6 +28,20 @@ const VENDOR_SCAN_PATTERNS: VendorScanPattern[] = [
     vendor: 'dell',
     matchesHost: (hostname) => /(^|\.)dell\.com$/i.test(hostname),
     extractTag: (url) => url.searchParams.get('t') ?? undefined
+  },
+  {
+    // Confirmed against a real scan:
+    // https://uatesupport.lenovo.com/qrcode/PF5A2W5D/21G3S04W00
+    // Path is /qrcode/<serial>/<machine type-model>; the second segment
+    // (MTM) is a model/type identifier, not the serial, and is ignored.
+    vendor: 'lenovo',
+    matchesHost: (hostname) => /(^|\.)lenovo\.com$/i.test(hostname),
+    extractTag: (url) => {
+      const segments = url.pathname.split('/').filter(Boolean)
+      const qrIndex = segments.findIndex((segment) => segment.toLowerCase() === 'qrcode')
+      if (qrIndex === -1) return undefined
+      return segments[qrIndex + 1]
+    }
   }
 ]
 
