@@ -60,6 +60,11 @@ interface AppState {
   setViewMode: (mode: ViewMode) => void
   setBulkInput: (value: string) => void
   setBulkRows: (rows: BulkSearchRow[] | undefined) => void
+  /** Adds rows to the end of the running results list rather than
+   * replacing it — used by both live scanning (one row at a time) and
+   * batch "Look up all" (many at once), so scanning and pasting a list
+   * can be mixed in the same session without losing earlier results. */
+  appendBulkRows: (rows: BulkSearchRow[]) => void
   setIsBulkSearching: (value: boolean) => void
   showToast: (message: string, tone?: ToastState['tone']) => void
   dismissToast: () => void
@@ -110,6 +115,7 @@ export const useAppStore = create<AppState>((set) => ({
   setViewMode: (viewMode) => set({ viewMode }),
   setBulkInput: (bulkInput) => set({ bulkInput }),
   setBulkRows: (bulkRows) => set({ bulkRows }),
+  appendBulkRows: (rows) => set((s) => ({ bulkRows: [...(s.bulkRows ?? []), ...rows] })),
   setIsBulkSearching: (isBulkSearching) => set({ isBulkSearching }),
   showToast: (message, tone = 'info') => {
     const id = ++toastCounter

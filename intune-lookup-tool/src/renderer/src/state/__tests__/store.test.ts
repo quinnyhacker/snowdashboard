@@ -57,3 +57,20 @@ describe('setSection', () => {
     expect(useAppStore.getState().sectionOpen.device).toBe(true)
   })
 })
+
+describe('appendBulkRows', () => {
+  beforeEach(() => {
+    useAppStore.setState({ bulkRows: undefined })
+  })
+
+  it('starts a fresh list when nothing has been added yet', () => {
+    useAppStore.getState().appendBulkRows([{ term: 'A-001', found: true, device: 'A-001', enrichment: {} }])
+    expect(useAppStore.getState().bulkRows).toEqual([{ term: 'A-001', found: true, device: 'A-001', enrichment: {} }])
+  })
+
+  it('appends to existing results instead of replacing them, so live scans and a batch run can mix', () => {
+    useAppStore.getState().appendBulkRows([{ term: 'A-001', found: true, device: 'A-001', enrichment: {} }])
+    useAppStore.getState().appendBulkRows([{ term: 'A-002', found: true, device: 'A-002', enrichment: {} }])
+    expect(useAppStore.getState().bulkRows?.map((r) => r.term)).toEqual(['A-001', 'A-002'])
+  })
+})

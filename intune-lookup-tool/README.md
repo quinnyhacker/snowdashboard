@@ -23,6 +23,20 @@ what went where.
 Bulk lookup only does exact matching per line — with dozens of laptops at once, silently guessing
 among partial matches would be worse than just flagging a line as not found.
 
+### Live scan mode
+
+A handheld scanner sends an Enter keystroke after each decode, so you don't have to click **Look up
+all** at the end of a batch — just leave the cursor in the bulk textarea and keep scanning laptops
+back-to-back. Each time Enter completes a line, that one entry is looked up immediately and appended
+to the results below, while the rest of the box (if you were also mid-typing something above it) is
+left alone. A **Last scanned** banner up top always shows the most recent scan full-size, with its
+district and a loud legal-hold warning if it's on hold, so a tech glancing up doesn't have to hunt
+through the results table.
+
+Pasting or typing a whole list and clicking **Look up all** still works the same as before, and adds
+to the same running results list rather than replacing it — so scanning a few, pasting a few more,
+and scanning some more all accumulate together. Use **Clear results** to start a fresh batch.
+
 ### Scanning QR codes instead of typing
 
 The QR code printed on the back of a laptop is a link to the manufacturer's support site, not the
