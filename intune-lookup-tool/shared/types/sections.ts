@@ -1,3 +1,5 @@
+export type SectionKind = 'device' | 'legalHold' | 'district'
+
 /** Status of one of the three loadable data sources, mirrored in the
  * sidebar. "needs-columns" means a file was read and is waiting on the
  * user to confirm which columns to use (shown as a modal). */

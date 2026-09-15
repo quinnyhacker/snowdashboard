@@ -1,10 +1,11 @@
 import path from 'node:path'
+import { promises as fs } from 'node:fs'
 import { findBestColumn } from '@shared/domain/columnGuess'
 import { buildDeviceIndex, type CsvRow, type DeviceIndex } from '@shared/domain/lookupIndex'
 import { buildLegalHoldSet } from '@shared/domain/legalHold'
 import { buildDistrictMap, type DistrictMap } from '@shared/domain/district'
 import { runSearch, type SearchMode, type SearchResult } from '@shared/domain/search'
-import type { SectionSummary } from '@shared/types/sections'
+import type { SectionKind, SectionSummary } from '@shared/types/sections'
 import { loadConfig, saveConfig } from './config'
 import { parseCsvFile } from './csv'
 
@@ -62,6 +63,12 @@ let pendingDevicePath: string | undefined
 let pendingLegalHoldPath: string | undefined
 let pendingDistrictPath: string | undefined
 
+// Last-seen modification time per section's file, used by pollForChanges()
+// to detect when someone else has overwritten a shared file — without
+// this, every poll tick would re-parse and re-announce "loaded" even when
+// nothing actually changed.
+const lastMtimes: Partial<Record<SectionKind, number>> = {}
+
 function fileName(filePath: string): string {
   return path.basename(filePath)
 }
@@ -69,6 +76,7 @@ function fileName(filePath: string): string {
 // ---------------- Device export ----------------
 
 export async function importDevice(filePath: string): Promise<SectionSummary> {
+  delete lastMtimes.device
   const { headers, rows } = await parseCsvFile(filePath)
   if (rows.length === 0) return { status: 'error', message: 'That file has no rows.' }
 
@@ -124,6 +132,7 @@ export function deviceColumnsPrompt(): SectionSummary | undefined {
 // ---------------- Legal hold ----------------
 
 export async function importLegalHold(filePath: string): Promise<SectionSummary> {
+  delete lastMtimes.legalHold
   const { headers, rows } = await parseCsvFile(filePath)
   if (rows.length === 0) return { status: 'error', message: 'That legal hold file has no rows.' }
 
@@ -179,6 +188,7 @@ export function legalHoldColumnsPrompt(): SectionSummary | undefined {
 // ---------------- District list ----------------
 
 export async function importDistrict(filePath: string): Promise<SectionSummary> {
+  delete lastMtimes.district
   const { headers, rows } = await parseCsvFile(filePath)
   if (rows.length === 0) return { status: 'error', message: 'That district file has no rows.' }
 
@@ -366,6 +376,49 @@ export async function refreshDistrict(): Promise<SectionSummary> {
   } catch {
     return { status: 'error', message: "Couldn't refresh — the file may be unreachable (e.g. off the network)." }
   }
+}
+
+// ---------------- Background auto-sync ----------------
+// Called on an interval from main/index.ts. Cheaply checks each loaded
+// file's modification time and only re-parses (and reports back) the
+// ones that actually changed — this is what makes "point everyone at the
+// same shared file, overwrite it when you have an update" propagate to
+// everyone automatically instead of requiring a manual Refresh click.
+
+async function hasFileChanged(kind: SectionKind, filePath: string): Promise<boolean> {
+  try {
+    const stat = await fs.stat(filePath)
+    const previous = lastMtimes[kind]
+    lastMtimes[kind] = stat.mtimeMs
+    // First time checking this path (e.g. right after load): record the
+    // baseline but don't report it as a change.
+    return previous !== undefined && previous !== stat.mtimeMs
+  } catch {
+    // File unreachable this cycle (e.g. off the VPN/network) — leave the
+    // baseline alone and try again next tick rather than erroring out.
+    return false
+  }
+}
+
+export interface SectionUpdate {
+  kind: SectionKind
+  summary: SectionSummary
+}
+
+export async function pollForChanges(): Promise<SectionUpdate[]> {
+  const updates: SectionUpdate[] = []
+
+  if (deviceState && (await hasFileChanged('device', deviceState.filePath))) {
+    updates.push({ kind: 'device', summary: await refreshDevice() })
+  }
+  if (legalHoldState && (await hasFileChanged('legalHold', legalHoldState.filePath))) {
+    updates.push({ kind: 'legalHold', summary: await refreshLegalHold() })
+  }
+  if (districtState && (await hasFileChanged('district', districtState.filePath))) {
+    updates.push({ kind: 'district', summary: await refreshDistrict() })
+  }
+
+  return updates
 }
 
 // ---------------- Search ----------------

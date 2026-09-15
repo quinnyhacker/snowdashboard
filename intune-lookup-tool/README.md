@@ -19,14 +19,16 @@ their own local copies, so there's one source of truth:
    `%APPDATA%\IntuneLookupTool\config.json`) and auto-loads from it on every future launch.
 3. Whoever produces the export just re-exports and overwrites the same file at that path
    periodically (same filename, so everyone's remembered path keeps working).
-4. Everyone else clicks **Refresh** next to a loaded section to re-read the file from disk — no
-   restart, no re-browsing. If the column layout ever changes, Refresh will prompt to re-confirm
-   columns instead of silently breaking.
+4. Everyone else automatically picks up the update within about 2 minutes (the app checks the
+   file's modification time in the background) — no restart, no manual click, no re-browsing.
+   There's also a **Refresh** button next to a loaded section for "check right now." If the column
+   layout ever changes, either path will prompt to re-confirm columns instead of silently breaking.
 
 This needs no new infrastructure — just a network share your team already has access to. There's
 no live/automatic sync from Intune itself; someone still has to periodically re-export and drop the
-file in place. Automating that export via Microsoft Graph, so nobody has to do it by hand, is a
-bigger follow-on step (needs an Entra ID app registration with read-only device/user permissions).
+file in place — "uploading" here just means overwriting that shared file. Automating the export
+itself via Microsoft Graph, so nobody has to do it by hand, is a bigger follow-on step (needs an
+Entra ID app registration with read-only device/user permissions).
 
 ## What changed from the PowerShell version
 

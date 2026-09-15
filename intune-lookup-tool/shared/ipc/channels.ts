@@ -17,5 +17,7 @@ export const IPC = {
   districtChangeColumns: 'district:changeColumns',
   districtRefresh: 'district:refresh',
 
-  searchRun: 'search:run'
+  searchRun: 'search:run',
+
+  syncSectionUpdated: 'sync:sectionUpdated'
 } as const

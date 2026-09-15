@@ -1,8 +1,8 @@
 import { create } from 'zustand'
 import type { SearchMode, SearchResult } from '@shared/domain/search'
-import type { SectionSummary } from '@shared/types/sections'
+import type { SectionKind, SectionSummary } from '@shared/types/sections'
 
-export type SectionKind = 'device' | 'legalHold' | 'district'
+export type { SectionKind }
 
 export interface ColumnPickerState {
   kind: SectionKind

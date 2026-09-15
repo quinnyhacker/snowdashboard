@@ -1,5 +1,10 @@
-import type { InitialState, SectionSummary } from '../types/sections'
+import type { InitialState, SectionKind, SectionSummary } from '../types/sections'
 import type { SearchMode, SearchResult } from '../domain/search'
+
+export interface SectionUpdate {
+  kind: SectionKind
+  summary: SectionSummary
+}
 
 export interface PreloadApi {
   app: {
@@ -26,5 +31,11 @@ export interface PreloadApi {
   }
   search: {
     run: (params: { mode: SearchMode; term: string }) => Promise<SearchResult>
+  }
+  sync: {
+    /** Fires whenever a background poll finds that a loaded file's
+     * contents changed on disk and re-parsed it automatically — e.g.
+     * someone overwrote a shared network file. */
+    onSectionUpdated: (cb: (update: SectionUpdate) => void) => () => void
   }
 }

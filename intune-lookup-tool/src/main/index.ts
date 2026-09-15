@@ -14,6 +14,7 @@ import {
   importDistrict,
   importLegalHold,
   legalHoldColumnsPrompt,
+  pollForChanges,
   refreshDevice,
   refreshDistrict,
   refreshLegalHold,
@@ -23,11 +24,28 @@ import {
   tryAutoLoadLegalHold
 } from './fileState'
 
+// How often to check loaded files for changes made by someone else (e.g. a
+// teammate overwriting a shared network export). Re-parsing a CSV is cheap,
+// and pollForChanges() skips the work entirely when a file's modification
+// time hasn't changed, so this can run fairly often without real cost.
+const AUTO_SYNC_INTERVAL_MS = 2 * 60 * 1000
+
 // Matches the original PowerShell tool's config location exactly, so a
 // config.json from that version works here unmodified (and vice versa).
 app.setPath('userData', join(app.getPath('appData'), 'IntuneLookupTool'))
 
 let mainWindow: BrowserWindow | null = null
+let autoSyncTimer: ReturnType<typeof setInterval> | undefined
+
+function startAutoSync(): void {
+  if (autoSyncTimer) return
+  autoSyncTimer = setInterval(async () => {
+    const updates = await pollForChanges()
+    for (const update of updates) {
+      mainWindow?.webContents.send(IPC.syncSectionUpdated, update)
+    }
+  }, AUTO_SYNC_INTERVAL_MS)
+}
 
 async function pickCsvFile(title: string): Promise<string | undefined> {
   const cfg = await loadConfig()
@@ -137,6 +155,7 @@ function registerIpcHandlers(): void {
 app.whenReady().then(() => {
   registerIpcHandlers()
   createWindow()
+  startAutoSync()
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
@@ -145,4 +164,8 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
+})
+
+app.on('before-quit', () => {
+  if (autoSyncTimer) clearInterval(autoSyncTimer)
 })
